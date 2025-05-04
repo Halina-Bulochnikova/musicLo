@@ -1,5 +1,5 @@
 import React from "react";
-import css from "./SearchBox.module.css";
+import s from "./SearchBox.module.css";
 import { useDispatch, useSelector } from "react-redux";
 import { changeFilter } from "../../redux/filtersSlice";
 
@@ -15,11 +15,11 @@ const SearchBox = () => {
   };
 
   return (
-    <div className={css.searchBlock}>
-      <label className={css.searchLabel}>
-        Find contacts by name:
+    <div className={s.searchBlock}>
+      <label className={s.searchLabel}>
+        Find track  by name:
         <input
-          className={css.searchField}
+          className={s.searchField}
           type="text"
           value={filter}
           onChange={onFilterChange}

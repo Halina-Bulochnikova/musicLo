@@ -1,37 +1,29 @@
-import css from "./App.module.css";
-import ContactList from "../ContactList/ContactList";
-import ContactForm from "../ContactForm/ContactForm";
-import SearchBox from "../SearchBox/SearchBox";
-import React from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { deleteContact } from "../../redux/contactsSlice";
+import { Route, Routes } from "react-router-dom";
+import { lazy } from "react";
+import s from './App.module.css'
+
+
+const Header = lazy(() => import("../Header/Header"));
+const DashboardPage = lazy(() =>
+  import("../../pages/DashboardPage/DashboardPage")
+);
+const CallbackPage = lazy(() =>
+  import("../../pages/CallbackPage/CallbackPage")
+);
+const NotFoundPage = lazy(() => import('../../pages/NotFoundPag/NotFoundPage'))
 
 const App = () => {
-  const dispatch = useDispatch();
-  const contacts = useSelector((state) => state.contacts.items);
-  const filter = useSelector((state) => state.filters.name);
-  
- 
-
-  const handleDelete = (id) => {
-    dispatch(deleteContact(id));
-  };
-  
-  const filteredContacts = contacts.filter((contact) =>
-    contact.name.toLowerCase().includes(filter.toLowerCase())
-  );
-  
-
   return (
-    <div className={css.container}>
-      <h1 className={css.title}>Phonebook</h1>
-
-      <ContactForm  />
-
-      <SearchBox  />
-
-      <ContactList contacts={filteredContacts} onDelete={handleDelete} />
+    <div>
+      <Header />
+      <Routes>
+        <Route path="/" element={<DashboardPage />}></Route>
+        <Route path="" element={<CallbackPage />}></Route>
+        <Route path="*" element={<NotFoundPage />}></Route>
+      </Routes>
     </div>
-  );
-};
+  );   
+    
+}
+
 export default App;
