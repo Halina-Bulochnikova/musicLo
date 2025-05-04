@@ -1,7 +1,8 @@
 import axios from "axios";
+import { getAccessToken } from './clientQr';
 
-const API_TOKEN =
-  "BQC0jmVtk7sgkKCJRFgt-6SrPXUeXN-i9GAZA5nnu8KfeeJnWz3YRUu6DpG9r-mUI1irTBO0TznvEWN76alH_7RxIGDCKpM5D7PeNo6fL3VP3i30lV7ARfzwy0ptw0Fwdyp3Nu5Oeiw";
+
+const API_TOKEN = { getAccessToken };
   
     
 export const options = axios.create({
