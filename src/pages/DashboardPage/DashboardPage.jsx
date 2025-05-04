@@ -42,6 +42,27 @@ loadTrending();
           </li>
         </ul>
       </section>
+      <section>
+        <h2>🎧 Нові релізи</h2>
+        <ul>
+          {result.map((album) => (
+            <li key={album.id}>
+              <img src={album.images[0]?.url} alt={album.name} width="100" />
+              <div>
+                <strong>{album.name}</strong> –{" "}
+                {album.artists.map((artist) => artist.name).join(", ")}
+              </div>
+              <a
+                href={album.external_urls.spotify}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Слухати
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 };
