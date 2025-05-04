@@ -21,24 +21,27 @@ loadTrending();
 
       <section id="profile">
         <h2>
-          Logged in as <span id="displayName"></span>
+          <strong>Ім’я користувача:</strong> <span id="displayName">—</span>
         </h2>
         <span id="avatar"></span>
         <ul>
           <li>
-            User ID: <span id="id"></span>
+            <strong>User:</strong> <span id="id">—</span>
           </li>
           <li>
-            Email: <span id="email"></span>
+            <strong>Email:</strong> <span id="email">—</span>
           </li>
           <li>
-            Spotify URI: <a id="uri" href="#"></a>
+            <strong>Spotify URI:</strong>{" "}
+            <a id="uri" href="#" target="_blank">
+              —
+            </a>
           </li>
           <li>
             Link: <a id="url" href="#"></a>
           </li>
           <li>
-            Profile Image: <span id="imgUrl"></span>
+            <strong>Зображення профілю:</strong> <span id="imgUrl">—</span>
           </li>
         </ul>
       </section>

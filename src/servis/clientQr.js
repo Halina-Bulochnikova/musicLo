@@ -1,14 +1,24 @@
 const clientId = "86605a51d31243bf89bbdf9d1cedcd7c";
-const params = new URLSearchParams(window.location.search);
-const code = params.get("code");
 
-if (!code) {
-  redirectToAuthCodeFlow(clientId);
-} else {
-  const accessToken = await getAccessToken(clientId, code);
-  const profile = await fetchProfile(accessToken);
-  populateUI(profile);
-}
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+
+  try {
+    if (!code) {
+      await redirectToAuthCodeFlow(clientId);
+    } else {
+      const accessToken = await getAccessToken(clientId, code);
+      const profile = await fetchProfile(accessToken);
+      populateUI(profile);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    alert(
+      "Помилка під час авторизації або отримання даних. Перевірте консоль."
+    );
+  }
+})();
 
 export async function redirectToAuthCodeFlow(clientId) {
   const verifier = generateCodeVerifier(128);
@@ -29,7 +39,7 @@ export async function redirectToAuthCodeFlow(clientId) {
 
 function generateCodeVerifier(length) {
   let text = "";
-  let possible =
+  const possible =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
   for (let i = 0; i < length; i++) {
@@ -41,7 +51,7 @@ function generateCodeVerifier(length) {
 async function generateCodeChallenge(codeVerifier) {
   const data = new TextEncoder().encode(codeVerifier);
   const digest = await window.crypto.subtle.digest("SHA-256", data);
-  return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
@@ -63,6 +73,12 @@ export async function getAccessToken(clientId, code) {
     body: params,
   });
 
+  if (!result.ok) {
+    const error = await result.text();
+    console.error("Token fetch error:", error);
+    throw new Error("Не вдалося отримати токен доступу");
+  }
+
   const { access_token } = await result.json();
   return access_token;
 }
@@ -73,17 +89,25 @@ async function fetchProfile(token) {
     headers: { Authorization: `Bearer ${token}` },
   });
 
+  if (!result.ok) {
+    const error = await result.text();
+    console.error("Profile fetch error:", error);
+    throw new Error("Не вдалося отримати профіль користувача");
+  }
+
   return await result.json();
 }
 
 function populateUI(profile) {
   document.getElementById("displayName").innerText = profile.display_name;
-  if (profile.images[0]) {
+
+  if (profile.images?.length > 0) {
     const profileImage = new Image(200, 200);
     profileImage.src = profile.images[0].url;
     document.getElementById("avatar").appendChild(profileImage);
     document.getElementById("imgUrl").innerText = profile.images[0].url;
   }
+
   document.getElementById("id").innerText = profile.id;
   document.getElementById("email").innerText = profile.email;
   document.getElementById("uri").innerText = profile.uri;
