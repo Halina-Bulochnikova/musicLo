@@ -9,7 +9,7 @@ const DashboardPage = lazy(() =>
 const CallbackPage = lazy(() =>
   import("../../pages/CallbackPage/CallbackPage")
 );
-const NotFoundPage = lazy(() => import("../../pages/NotFoundPag/NotFoundPage")); // ← typo?
+const NotFoundPage = lazy(() => import("../../pages/NotFoundPag/NotFoundPage"));
 
 const App = () => {
   return (
@@ -17,8 +17,8 @@ const App = () => {
       <div className={s.wrapper}>
         <Header />
         <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/callback" element={<CallbackPage />} />
+          <Route path="/" element={<CallbackPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

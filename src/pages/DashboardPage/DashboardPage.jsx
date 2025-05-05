@@ -1,29 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { getAccessToken, redirectToAuthCodeFlow } from "../../servis/clientQr";
+import { redirectToAuthCodeFlow } from "../../servis/clientQr";
 
-const clientId = "86605a51d31243bf89bbdf9d1cedcd7c"; // заміни на свій Client ID
+const clientId = "86605a51d31243bf89bbdf9d1cedcd7c";
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function init() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get("code");
-      let accessToken = localStorage.getItem("spotify_access_token");
+    async function fetchProfile() {
+      const accessToken = localStorage.getItem("spotify_access_token");
+
+      if (!accessToken) {
+        await redirectToAuthCodeFlow(clientId);
+        return;
+      }
 
       try {
-        if (!accessToken && code) {
-          // Обмін коду на токен
-          accessToken = await getAccessToken(clientId, code);
-        } else if (!accessToken) {
-          // Редірект на авторизацію
-          await redirectToAuthCodeFlow(clientId);
-          return;
-        }
-
-        // Отримання профілю користувача
         const res = await fetch("https://api.spotify.com/v1/me", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -31,7 +24,6 @@ export default function DashboardPage() {
         });
 
         if (res.status === 401) {
-          // Токен недійсний або протух
           localStorage.removeItem("spotify_access_token");
           window.location.reload();
           return;
@@ -40,26 +32,31 @@ export default function DashboardPage() {
         const data = await res.json();
         setProfile(data);
       } catch (err) {
-        console.error("Spotify auth error:", err.message);
+        console.error("Failed to fetch profile:", err);
       } finally {
         setLoading(false);
       }
     }
 
-    init();
+    fetchProfile();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Завантаження профілю...</div>;
 
   return (
     <div>
       {profile ? (
         <div>
-          <h1>Welcome, {profile.display_name}</h1>
+          <h1>Привіт, {profile.display_name}</h1>
           <p>Email: {profile.email}</p>
+          <img
+            src={profile.images?.[0]?.url}
+            alt="User Avatar"
+            style={{ width: 100, borderRadius: "50px" }}
+          />
         </div>
       ) : (
-        <div>No profile data available</div>
+        <div>Дані профілю не знайдено</div>
       )}
     </div>
   );
