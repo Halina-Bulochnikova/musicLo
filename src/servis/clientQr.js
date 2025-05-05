@@ -1,42 +1,3 @@
-const clientId = "86605a51d31243bf89bbdf9d1cedcd7c";
-
-(async () => {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get("code");
-
-  try {
-    if (!code) {
-      await redirectToAuthCodeFlow(clientId);
-    } else {
-      const accessToken = await getAccessToken(clientId, code);
-      const profile = await fetchProfile(accessToken);
-      populateUI(profile);
-    }
-  } catch (error) {
-    console.error("Error:", error);
-    alert(
-      "Помилка під час авторизації або отримання даних. Перевірте консоль."
-    );
-  }
-})();
-
-export async function redirectToAuthCodeFlow(clientId) {
-  const verifier = generateCodeVerifier(128);
-  const challenge = await generateCodeChallenge(verifier);
-
-  localStorage.setItem("verifier", verifier);
-
-  const params = new URLSearchParams();
-  params.append("client_id", clientId);
-  params.append("response_type", "code");
-  params.append("redirect_uri", "http://127.0.0.1:5174");
-  params.append("scope", "user-read-private user-read-email");
-  params.append("code_challenge_method", "S256");
-  params.append("code_challenge", challenge);
-
-  document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
-}
-
 function generateCodeVerifier(length) {
   let text = "";
   const possible =
@@ -57,14 +18,36 @@ async function generateCodeChallenge(codeVerifier) {
     .replace(/=+$/, "");
 }
 
+// Авторизація: редірект на Spotify
+export async function redirectToAuthCodeFlow(clientId) {
+  const verifier = generateCodeVerifier(128);
+  const challenge = await generateCodeChallenge(verifier);
+
+  localStorage.setItem("verifier", verifier);
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    response_type: "code",
+    redirect_uri: "http://music-lo-red.vercel.app",
+    scope: "user-read-private user-read-email",
+    code_challenge_method: "S256",
+    code_challenge: challenge,
+  });
+
+  window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
+}
+
+// Отримання access token
 export async function getAccessToken(clientId, code) {
   const verifier = localStorage.getItem("verifier");
+
+  window.history.replaceState({}, document.title, "/dashboard");
 
   const params = new URLSearchParams();
   params.append("client_id", clientId);
   params.append("grant_type", "authorization_code");
   params.append("code", code);
-  params.append("redirect_uri", "http://127.0.0.1:5174");
+  params.append("redirect_uri", "http://music-lo-red.vercel.app");
   params.append("code_verifier", verifier);
 
   const result = await fetch("https://accounts.spotify.com/api/token", {
@@ -74,46 +57,20 @@ export async function getAccessToken(clientId, code) {
   });
 
   if (!result.ok) {
-    const error = await result.text();
-    console.error("Token fetch error:", error);
-    throw new Error("Не вдалося отримати токен доступу");
+    const errorText = await result.text();
+    console.error("Token error response:", errorText);
+    throw new Error("Token error");
   }
 
   const { access_token } = await result.json();
+  localStorage.setItem("spotify_access_token", access_token); // ✅ Збереження
   return access_token;
 }
 
-async function fetchProfile(token) {
-  const result = await fetch("https://api.spotify.com/v1/me", {
-    method: "GET",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!result.ok) {
-    const error = await result.text();
-    console.error("Profile fetch error:", error);
-    throw new Error("Не вдалося отримати профіль користувача");
+// Обробка помилки 401 для отримання профілю
+export async function handleProfileError(profileRes) {
+  if (profileRes.status === 401) {
+    localStorage.removeItem("spotify_access_token");
+    window.location.reload(); // або повторна авторизація
   }
-
-  return await result.json();
-}
-
-function populateUI(profile) {
-  document.getElementById("displayName").innerText = profile.display_name;
-
-  if (profile.images?.length > 0) {
-    const profileImage = new Image(200, 200);
-    profileImage.src = profile.images[0].url;
-    document.getElementById("avatar").appendChild(profileImage);
-    document.getElementById("imgUrl").innerText = profile.images[0].url;
-  }
-
-  document.getElementById("id").innerText = profile.id;
-  document.getElementById("email").innerText = profile.email;
-  document.getElementById("uri").innerText = profile.uri;
-  document
-    .getElementById("uri")
-    .setAttribute("href", profile.external_urls.spotify);
-  document.getElementById("url").innerText = profile.href;
-  document.getElementById("url").setAttribute("href", profile.href);
 }

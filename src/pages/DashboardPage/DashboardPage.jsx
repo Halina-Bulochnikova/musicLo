@@ -1,73 +1,66 @@
-import s from './DashboardPage.module.css';
-import { useEffect, useState } from "react";
-import { fetchTrending } from '../../servis/api';
- 
+import React, { useEffect, useState } from "react";
+import { getAccessToken, redirectToAuthCodeFlow } from "../../servis/clientQr";
 
+const clientId = "86605a51d31243bf89bbdf9d1cedcd7c"; // заміни на свій Client ID
 
-const DashboardPage = () => {
-  const [result, setResult] = useState([]);
+export default function DashboardPage() {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadTrending = async () => {
-      const result = await fetchTrending();
-      setResult(result);
-    };
-loadTrending();
-}, []);
+    async function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
+      let accessToken = localStorage.getItem("spotify_access_token");
+
+      try {
+        if (!accessToken && code) {
+          // Обмін коду на токен
+          accessToken = await getAccessToken(clientId, code);
+        } else if (!accessToken) {
+          // Редірект на авторизацію
+          await redirectToAuthCodeFlow(clientId);
+          return;
+        }
+
+        // Отримання профілю користувача
+        const res = await fetch("https://api.spotify.com/v1/me", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (res.status === 401) {
+          // Токен недійсний або протух
+          localStorage.removeItem("spotify_access_token");
+          window.location.reload();
+          return;
+        }
+
+        const data = await res.json();
+        setProfile(data);
+      } catch (err) {
+        console.error("Spotify auth error:", err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    init();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div>
-      <h1>Display your Spotify profile data</h1>
-
-      <section id="profile">
-        <h2>
-          <strong>Ім’я користувача:</strong> <span id="displayName">—</span>
-        </h2>
-        <span id="avatar"></span>
-        <ul>
-          <li>
-            <strong>User:</strong> <span id="id">—</span>
-          </li>
-          <li>
-            <strong>Email:</strong> <span id="email">—</span>
-          </li>
-          <li>
-            <strong>Spotify URI:</strong>{" "}
-            <a id="uri" href="#" target="_blank">
-              —
-            </a>
-          </li>
-          <li>
-            Link: <a id="url" href="#"></a>
-          </li>
-          <li>
-            <strong>Зображення профілю:</strong> <span id="imgUrl">—</span>
-          </li>
-        </ul>
-      </section>
-      <section>
-        <h2>🎧 Нові релізи</h2>
-        <ul>
-          {result.map((album) => (
-            <li key={album.id}>
-              <img src={album.images[0]?.url} alt={album.name} width="100" />
-              <div>
-                <strong>{album.name}</strong> –{" "}
-                {album.artists.map((artist) => artist.name).join(", ")}
-              </div>
-              <a
-                href={album.external_urls.spotify}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Слухати
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {profile ? (
+        <div>
+          <h1>Welcome, {profile.display_name}</h1>
+          <p>Email: {profile.email}</p>
+        </div>
+      ) : (
+        <div>No profile data available</div>
+      )}
     </div>
   );
-};
-export default DashboardPage;
-
+}

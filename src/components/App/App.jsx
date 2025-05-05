@@ -1,7 +1,6 @@
 import { Route, Routes } from "react-router-dom";
-import { lazy } from "react";
-import s from './App.module.css'
-
+import React, { lazy, Suspense } from "react";
+import s from "./App.module.css";
 
 const Header = lazy(() => import("../Header/Header"));
 const DashboardPage = lazy(() =>
@@ -10,20 +9,21 @@ const DashboardPage = lazy(() =>
 const CallbackPage = lazy(() =>
   import("../../pages/CallbackPage/CallbackPage")
 );
-const NotFoundPage = lazy(() => import('../../pages/NotFoundPag/NotFoundPage'))
+const NotFoundPage = lazy(() => import("../../pages/NotFoundPag/NotFoundPage")); // ← typo?
 
 const App = () => {
   return (
-    <div>
-      <Header />
-      <Routes>
-        <Route path="/" element={<DashboardPage />}></Route>
-        <Route path="" element={<CallbackPage />}></Route>
-        <Route path="*" element={<NotFoundPage />}></Route>
-      </Routes>
-    </div>
-  );   
-    
-}
+    <Suspense fallback={<div>Завантаження...</div>}>
+      <div className={s.wrapper}>
+        <Header />
+        <Routes>
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/callback" element={<CallbackPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </div>
+    </Suspense>
+  );
+};
 
 export default App;
